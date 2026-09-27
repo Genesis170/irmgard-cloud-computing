@@ -8,8 +8,15 @@ behavior, and horizontal scaling, deployed and tested on Minikube.
 
 ## Architecture
 
+
 TODO
 
+
+The webserver accepts image uploads, stores the file in MinIO, writes
+metadata to PostgreSQL, and publishes a job message to RabbitMQ. The
+worker consumes that message, retrieves the image from MinIO, runs
+YOLO-based object detection, and stores the processed result back in
+MinIO.
 
 ## Components
 
@@ -25,9 +32,14 @@ TODO
 
 ## Attribution
 
-The webserver (Go) and worker (Ruby) are based on template code provided
-as part of the "Cloud Computing" course at HTW Saarland [2026]. My own
-contributions cover:
+The webserver (Go) and worker (Ruby) are based on template code and
+assignment instructions provided as part of the "Cloud Computing"
+course at HTW. The original assignment READMEs are kept for reference
+at `src/webserver/ORIGINAL-ASSIGNMENT.md` and
+`src/worker/ORIGINAL-ASSIGNMENT.md`.
+
+My own contributions cover completing the TODOs in both codebases
+and building the entire Kubernetes infrastructure described below.
 
 - Completing the TODOs in both codebases (env-var configuration,
   bucket handling, queue declaration with quorum type, error handling,
@@ -39,25 +51,52 @@ contributions cover:
 - All debugging, redundancy testing, and failover analysis documented
   in `docs/report.md`
 
+## Prerequisites
+
+- Minikube (or another Kubernetes cluster)
+- Helm (for the Zalando Postgres Operator and OpenSearch)
+- `kubectl` configured against the target cluster
+
+This setup assumes the namespace **`k8s-training`**. If you deploy into
+a different namespace, update the hardcoded references in:
+- `k8s/logging/fluentd-daemonset.yaml` (ClusterRoleBinding subject namespace)
+- `k8s/rabbitmq/rabbitMQ.yaml` (`cluster_formation.k8s.hostname_suffix`)
+
 ## Deployment order
 
 ```bash
+# 0. Install operators/charts (one-time, cluster-wide)
+helm repo add postgres-operator-charts https://opensource.zalando.com/postgres-operator/charts/postgres-operator
+helm install postgres-operator postgres-operator-charts/postgres-operator --namespace k8s-training
+
+helm repo add opensearch https://opensearch-project.github.io/helm-charts/
+helm install opensearch opensearch/opensearch --namespace k8s-training \
+  --set singleNode=true \
+  --set "extraEnvs[0].name=OPENSEARCH_INITIAL_ADMIN_PASSWORD" \
+  --set "extraEnvs[0].value=<your-password>"
+helm install opensearch-dashboards opensearch/opensearch-dashboards --namespace k8s-training \
+  --set opensearchHosts="https://opensearch-cluster-master:9200"
+
 # 1. Shared config & secrets
 kubectl apply -f k8s/shared/
 
 # 2. Backend services
-kubectl apply -f k8s/rabbitmq/rabbitmq.yaml
+kubectl apply -f k8s/rabbitmq/rabbitMQ.yaml
 kubectl apply -f k8s/postgres/postgres-cluster.yaml
-kubectl apply -f k8s/minio/minio.yaml
+kubectl apply -f k8s/minio/minioOS.yaml
 
 # wait until all pods are Running/Ready
 kubectl get pods -w
 
-# 3. Application
-kubectl apply -f k8s/webserver/irmgard-deployment.yaml
-kubectl apply -f k8s/worker/worker-deployment.yaml
+# 3. Database migration (creates schema, grants least-privilege access)
+kubectl apply -f k8s/job/migration-job.yaml
+kubectl logs -l job-name=irmgard-db-migration
 
-# 4. Logging (optional)
+# 4. Application
+kubectl apply -f k8s/webserver/irmgard.yaml
+kubectl apply -f k8s/worker/worker.yaml
+
+# 5. Logging (optional)
 kubectl apply -f k8s/logging/fluentd-config.yaml
 kubectl apply -f k8s/logging/fluentd-daemonset.yaml
 ```
@@ -65,6 +104,14 @@ kubectl apply -f k8s/logging/fluentd-daemonset.yaml
 **Note:** `k8s/shared/secret-htw.yaml` is not included in this repo.
 Copy `secret-htw.example.yaml`, fill in your own credentials, and apply
 it before anything else.
+
+**Note:** `migration-job.yaml` creates a Kubernetes `Job`, which is
+mostly immutable once created. If you need to re-run it (e.g. after a
+full reset), delete the old job first:
+```bash
+kubectl delete job irmgard-db-migration --ignore-not-found
+kubectl apply -f k8s/job/migration-job.yaml
+```
 
 ## Notable troubleshooting / things learned
 
