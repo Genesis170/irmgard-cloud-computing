@@ -1,0 +1,27 @@
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: irmgard-postgres
+spec:
+  teamId: "htw"
+  numberOfInstances: 3
+  postgresql:
+    version: "15"
+    parameters:
+      password_encryption: "md5"
+  volume:
+    size: 1Gi
+  users:
+    postgreshtw:  # wird zu Datenbankuser "postgreshtw"
+      - superuser
+      - createdb
+    irmgard_app: []
+  databases:
+    postgres: postgreshtw   # Datenbankname: Owner-User
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi

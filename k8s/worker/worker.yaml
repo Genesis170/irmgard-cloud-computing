@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: facerecognition-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: facerecognition-container
+          image: spam170/facerecognition-yolo:0.4.2
+          env:
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: config-htw
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: config-htw
+                  key: RABBITMQ_PORT
+            - name: MINIO_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: config-htw
+                  key: MINIO_HOST
+            - name: MINIO_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: config-htw
+                  key: MINIO_PORT
+            - name: MINIO_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: config-htw
+                  key: MINIO_REGION
+            - name: OBJECT_STORE_PROVIDER
+              valueFrom:
+                configMapKeyRef:
+                  name: config-htw
+                  key: OBJECT_STORE_PROVIDER
+            - name: BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config-htw
+                  key: BUCKET_NAME
+            - name: OUT_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config-htw
+                  key: OUT_BUCKET_NAME
+            - name: INFILE_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: config-htw
+                  key: INFILE_PATH
+            - name: OUTFILE_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: config-htw
+                  key: OUTFILE_PATH
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: secret-htw
+                  key: rabbitmq-user
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-htw
+                  key: rabbitmq-pass
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secret-htw
+                  key: minio-access-key
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secret-htw
+                  key: minio-secret-key

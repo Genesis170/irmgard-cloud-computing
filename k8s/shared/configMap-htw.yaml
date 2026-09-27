@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-htw
+data:
+  POSTGRES_HOST: "irmgard-postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "postgres"
+  RABBITMQ_HOST: "rabbitmq-service"
+  RABBITMQ_PORT: "5672"
+  MINIO_ENDPOINT: "minio-service:9000"
+  MINIO_HOST: "minio-service"            
+  MINIO_PORT: "9000"
+  MINIO_REGION: "us-east-1"
+  OBJECT_STORE_PROVIDER: "AWS"                     
+  BUCKET_NAME: "infiles"
+  OUT_BUCKET_NAME: "outfiles"
+  INFILE_PATH: "/tmp/object_recognition/original-image.jpg"
+  OUTFILE_PATH: "/tmp/object_recognition/filtered-image.jpg"
+  OPENSEARCH_HOST: "opensearch-cluster-master"
+  OPENSEARCH_PORT: "9200"
+  OPENSEARCH_SCHEME: "https"
+  OPENSEARCH_USER: "admin"
