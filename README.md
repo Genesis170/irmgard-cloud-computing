@@ -117,21 +117,25 @@ kubectl apply -f k8s/job/migration-job.yaml
   simultaneously occasionally produced `inconsistent_cluster` errors
   during Mnesia schema merge — a known timing issue with manual peer
   discovery, resolved by restarting the affected pod(s).
+  
 - **Quorum queue majority behavior**: verified experimentally that a
   3-member quorum queue tolerates exactly 1 node failure; losing 2 of 3
   makes the queue unavailable (no data loss, but blocked) until a
   majority is restored — a direct illustration of the CAP theorem
   trade-off.
+  
 - **`kubectl port-forward` is not a load balancer**: it binds to a
   single pod for the lifetime of the forwarded connection, which
   initially made horizontal scaling of the webserver look ineffective.
   Verified real load-balancing behavior using an in-cluster client
   hitting the Service DNS name directly.
+  
 - **Image registry churn**: `minio/minio` and later `quay.io/minio/minio`
   became unavailable/unauthorized mid-project; had to migrate to
   `bitnami/minio`, then `bitnamilegacy/minio` as Bitnami restructured
   its Docker Hub namespace — a practical case for pinning specific,
   verified tags instead of `:latest` in reproducible setups.
+  
 - **Postgres least-privilege setup**: separated the Zalando-operator
   superuser (schema migration only) from the application's runtime
   user (`SELECT`/`INSERT`/`UPDATE` only), rather than giving the app
