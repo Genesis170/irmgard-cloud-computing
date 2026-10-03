@@ -9,7 +9,7 @@ behavior, and horizontal scaling, deployed and tested on Minikube.
 ## Architecture
 
 
-TODO
+![Architecture diagram](docs/architecture.png)
 
 
 The webserver accepts image uploads, stores the file in MinIO, writes
