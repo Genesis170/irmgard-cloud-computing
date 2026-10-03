@@ -9,8 +9,6 @@ behavior, and horizontal scaling, deployed and tested on Minikube.
 ## Architecture
 
 
-![Architeecture diagram](docs/architecture.png)
-
 
 The webserver accepts image uploads, stores the file in MinIO, writes
 metadata to PostgreSQL, and publishes a job message to RabbitMQ. The
