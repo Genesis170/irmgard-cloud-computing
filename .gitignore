@@ -1,2 +1,6 @@
 secret-htw.yaml
 src/worker/yolov3.weights
+
+#macOS
+.DS_Store
+**/.DS_Store
