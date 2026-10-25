@@ -167,3 +167,20 @@ because the worker does not talk to PostgreSQL.
  
 ---
 
+## 3. Further lessons learned
+ 
+- `kubectl delete all --all` does not delete PVCs, Secrets or ConfigMaps;
+  stale volumes caused several broken restarts (e.g. old MinIO
+  credentials, old RabbitMQ cluster state).
+- Credentials of stateful systems are fixed on first initialisation;
+  changing the Secret later does not change them.
+- Resource limits matter: three parallel YOLO workers without limits made
+  the Minikube API server unresponsive.
+- Public images change: `minio/minio` and `quay.io/minio/minio` became
+  unusable during the project, and Bitnami restructured its namespace.
+  Pin verified tags rather than `:latest`.
+- Operator versus manual: RabbitMQ built by hand taught the mechanics
+  (peer discovery, cookie, headless service, bootstrap races); the
+  Postgres operator delivered HA, secrets and probes with far less
+  configuration.
+ 
